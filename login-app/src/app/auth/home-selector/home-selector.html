@@ -1,0 +1,53 @@
+<div class="home-selector-page">
+  <header class="navbar">
+    <div class="navbar-left">
+      <img src="assets/img/logoPrincipal.png" alt="Logo" class="logo" />
+      <span class="app-name">KanbanFlow</span>
+    </div>
+    <div class="navbar-right">
+      <div class="user-menu">
+        <img [src]="user?.avatar || 'assets/avatar.svg'" alt="Usuario" class="avatar" />
+        <span *ngIf="user" class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
+        <button class="logout-btn" (click)="onLogout()">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="welcome-section">
+      <h1 *ngIf="user">¡Bienvenido, {{ user.first_name }}!</h1>
+      <h1 *ngIf="!user">¡Bienvenido a KanbanFlow!</h1>
+      <p class="subtitle">¿Qué te gustaría hacer hoy?</p>
+    </div>
+
+    <div class="options-container">
+      <!-- Cambiado: Workspace ahora es la primera opción -->
+      <div class="option-card" (click)="navigateTo('/workspace-list')">
+        <div class="card-icon">🏢</div>
+        <h3>Workspaces</h3>
+        <p>Gestionar espacios de trabajo y equipos</p>
+      </div>
+
+      <!-- Cambiado: Dashboard ahora es la segunda opción -->
+      <div class="option-card" (click)="navigateTo('/dashboard')">
+        <div class="card-icon">📊</div>
+        <h3>Mis tareas</h3>
+        <p>Ver estadísticas y resumen de actividades</p>
+      </div>
+    </div>
+
+    <div class="quick-access">
+      <h3>Accesos Rápidos</h3>
+      <div class="quick-buttons">
+        <button class="quick-btn" (click)="goToDashboard()">
+          📝 Mis Tareas
+        </button>
+        <button class="quick-btn" (click)="goToWorkspaces()">
+          📁 Mis Workspaces
+        </button>
+      </div>
+    </div>
+  </main>
+</div>

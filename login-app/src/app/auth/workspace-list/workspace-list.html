@@ -1,0 +1,151 @@
+<div class="workspace-page">
+  <header class="navbar">
+    <div class="navbar-left">
+      <button class="back-btn" (click)="goToHome()">← Inicio</button>
+      <img src="assets/img/logoPrincipal.png" alt="Logo" class="logo" />
+      <span class="app-name">KanbanFlow</span>
+      <span class="section-name">- Gestión de Workspaces</span>
+    </div>
+    <div class="navbar-center">
+      <input type="text" placeholder="Buscar workspaces..." class="search-bar" />
+    </div>
+    <div class="navbar-right">
+      <div class="user-menu">
+        <img [src]="user?.avatar || 'assets/avatar.svg'" alt="Usuario" class="avatar" />
+        <span *ngIf="user" class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
+        <div class="dropdown">
+          <a href="#">Mi Perfil</a>
+          <a href="#" (click)="goToDashboard(); $event.preventDefault()">Mi Dashboard</a>
+          <a href="#" (click)="onLogout(); $event.preventDefault()">Cerrar Sesión</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="content-header">
+      <h2>Gestión de Workspaces</h2>
+      <p class="workspace-description">Crea y administra tus espacios de trabajo, equipos y proyectos</p>
+      
+      <div class="action-buttons">
+        <button class="refresh-btn" (click)="refresh()">🔄 Actualizar</button>
+        <button class="dashboard-btn" (click)="goToDashboard()">📊 Mis Tareas</button>
+        <button class="create-btn" (click)="createWorkspace()">+ Crear Workspace</button>
+      </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-number">{{ ownWorkspaces.length + memberWorkspaces.length }}</div>
+        <div class="stat-label">Total Workspaces</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ getCreatedByMeCount() }}</div>
+        <div class="stat-label">Creados por mí</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ getSharedWithMeCount() }}</div>
+        <div class="stat-label">Compartidos conmigo</div>
+      </div>
+    </div>
+
+    <div class="loading-error">
+      <div *ngIf="loading" class="loading">Cargando workspaces...</div>
+      <div *ngIf="error" class="error">{{ error }}</div>
+    </div>
+
+    <div *ngIf="!loading && !error && ownWorkspaces.length === 0 && memberWorkspaces.length === 0" class="no-workspaces-message">
+      <div class="empty-state">
+        <div class="empty-icon">📂</div>
+        <h3>No tienes workspaces</h3>
+        <p>Crea tu primer workspace o pide a alguien que te agregue a un equipo</p>
+        <button class="create-btn" (click)="createWorkspace()">+ Crear mi primer Workspace</button>
+      </div>
+    </div>
+
+    <!-- Mensaje especial para usuarios solo con workspaces compartidos -->
+    <div *ngIf="!loading && !error && ownWorkspaces.length === 0 && memberWorkspaces.length > 0" class="info-message">
+      <div class="info-content">
+        <div class="info-icon">ℹ️</div>
+        <div class="info-text">
+          <h4>¡Bienvenido a los workspaces compartidos!</h4>
+          <p>Actualmente no tienes workspaces propios, pero perteneces a {{ memberWorkspaces.length }} workspace(s) compartido(s). 
+          Puedes crear tu propio workspace cuando quieras.</p>
+        </div>
+        <button class="create-btn secondary" (click)="createWorkspace()">+ Crear mi Workspace</button>
+      </div>
+    </div>
+
+    <!-- Workspaces Propios -->
+    <section class="workspaces-section" *ngIf="ownWorkspaces.length > 0">
+      <h3>📁 Mis Workspaces Creados</h3>
+      <div class="workspaces-grid">
+        <div class="workspace-card owner" *ngFor="let workspace of ownWorkspaces">
+          <div class="workspace-header">
+            <h4>{{ workspace.name }}</h4>
+            <div class="workspace-actions">
+              <button class="edit-btn" (click)="editWorkspace(workspace.id)">✏️</button>
+              <button class="delete-btn" (click)="deleteWorkspace(workspace.id, $event)">🗑️</button>
+            </div>
+          </div>
+          <p class="workspace-description">{{ workspace.description || 'Sin descripción' }}</p>
+          <div class="workspace-meta">
+            <span class="role-badge owner">👑 Propietario</span>
+            <span class="created-date">Creado: {{ workspace.created_at | date:'short' }}</span>
+          </div>
+          <button class="enter-btn" (click)="enterWorkspace(workspace.id)">
+            🚀 Gestionar Workspace
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspaces donde es Miembro -->
+    <section class="workspaces-section" *ngIf="memberWorkspaces.length > 0">
+      <h3>👥 Workspaces Compartidos</h3>
+      <p class="section-description">Workspaces donde pertenezco a equipos como líder o miembro</p>
+      
+      <div class="workspaces-list">
+        <div class="workspace-item" 
+             [class]="workspace.userRole === 'leader' ? 'leader' : 'member'" 
+             *ngFor="let workspace of memberWorkspaces">
+          <div class="workspace-content" (click)="enterWorkspace(workspace.id)">
+            <div class="workspace-header">
+              <div class="workspace-title">
+                <h4>{{ workspace.name }}</h4>
+                <span class="role-badge" [class]="workspace.userRole">
+                  {{ workspace.userRole === 'leader' ? '👤 Líder de Equipo' : '👤 Miembro de Equipo' }}
+                </span>
+              </div>
+              <div class="workspace-status">
+                <span class="status-indicator" [class]="workspace.userRole === 'leader' ? 'management' : 'readonly'">
+                  {{ workspace.userRole === 'leader' ? '⚡ Gestión' : '👁️ Solo lectura' }}
+                </span>
+              </div>
+            </div>
+
+            <p class="workspace-description">{{ workspace.description || 'Sin descripción' }}</p>
+
+            
+
+            <div class="workspace-actions">
+              <button 
+                class="enter-btn"
+                [class]="workspace.userRole === 'leader' ? 'management' : 'view-only'"
+                (click)="enterWorkspace(workspace.id); $event.stopPropagation()">
+                <span *ngIf="workspace.userRole === 'leader'">� Gestionar Workspace</span>
+                <span *ngIf="workspace.userRole === 'member'">👀 Ver Mis Tareas</span>
+              </button>
+              <button 
+                class="info-btn"
+                (click)="showWorkspaceInfo(workspace); $event.stopPropagation()">
+                ℹ️ Más info
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
